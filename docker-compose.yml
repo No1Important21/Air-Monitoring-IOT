@@ -29,18 +29,32 @@ services:
     volumes:
       - influxdb-data:/var/lib/influxdb2
 
-  # 3. Jembatan Data (Telegraf)
+  # 3. Database Arsip (PostgreSQL) - opsional, untuk backup terstruktur & query SQL
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=arsip_admin
+      - POSTGRES_PASSWORD=passwordarsip123
+      - POSTGRES_DB=sensor_archive
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # 4. Jembatan Data (Telegraf)
   telegraf:
     image: telegraf:latest
     container_name: telegraf
     depends_on:
       - mosquitto
       - influxdb
+      - postgres
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - ./logs:/logs   # <-- folder log mentah (backup data, di luar InfluxDB)
 
-  # 4. Visualisasi (Grafana)
+  # 5. Visualisasi (Grafana)
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -59,3 +73,4 @@ services:
 volumes:
   influxdb-data:
   grafana-data:
+  postgres-data:
